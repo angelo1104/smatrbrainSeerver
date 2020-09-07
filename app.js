@@ -64,7 +64,7 @@ app.post("/register", function (req, res) {
     const hash = bcrypt.hashSync(password, 10);
 
     db.transaction(trx => {
-        trx('login').insert({
+        trx.insert({
             hash: hash,
             email: email
         }).returning('email')
@@ -78,9 +78,8 @@ app.post("/register", function (req, res) {
                 })
             }).then(trx.commit)
             .catch(trx.rollback)
-    }).catch(err => {
-        res.status(400).json('unable to register user.')
     })
+        .catch(err => res.status(400).json('unable to register'))
 })
 
 app.get("/profile/:userid", function (req, res) {
