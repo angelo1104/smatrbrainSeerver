@@ -50,12 +50,19 @@ app.post("/signin", function (req, res) {
     const email = req.body.email;
     const password = req.body.password;
 
-    if (email === database.users[0].email && password === database.users[0].password) {
-        res.json(database.users[0])
-    } else {
-        res.status(400);
-        res.json("there was an error.")
-    }
+    db.select('*').from('login').where('email', '=', email)
+        .then(users => {
+            const isValid = bcrypt.compareSync(password, users[0].hash);
+
+            if (isValid) {
+                db.select('*').from('users').where('email', '=', email)
+                    .then((user) => {
+                        res.json(user[0])
+                    }).catch(err => res.status(400).json('unable to find user'))
+            } else {
+                res.status(404).json('password is wrong')
+            }
+        }).catch(err => res.status(400).json('email is wrong'))
 
 });
 
@@ -100,7 +107,6 @@ app.get("/profile/:userid", function (req, res) {
             res.status(400);
             res.json("no such user")
         }
-        console.log(user);
     }).catch(err => {
         res.status(400);
         res.json("there was an error")
@@ -116,7 +122,6 @@ app.patch("/image", function (req, res) {
         .where('id', '=', id)
         .increment('entries')
         .then(entries => {
-            console.log(entries);
             if (entries) {
                 res.json(entries[0]);
             } else {
@@ -130,7 +135,7 @@ app.patch("/image", function (req, res) {
 })
 
 
-app.listen(3000, function (error) {
+app.listen(3000||5000, function (error) {
     console.log("Server running on Port 3000.")
 
     if (error) {
